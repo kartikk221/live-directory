@@ -1,0 +1,20 @@
+{
+  "name": "live-directory",
+  "version": "1.0.0",
+  "description": "Dynamic File Content Manager For Webservers and Content Management Applications.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "dynamic",
+    "content",
+    "manager",
+    "files",
+    "html-manager",
+    "template-manager",
+    "hot-reloading"
+  ],
+  "author": "kartikk221",
+  "license": "MIT"
+}
