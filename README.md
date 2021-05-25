@@ -1,5 +1,16 @@
 # LiveDirectory: Dynamic File Content Manager
 
+<div align="left">
+
+[![NPM version](https://img.shields.io/npm/v/live-directory.svg?style=flat)](https://www.npmjs.com/package/live-directory)
+[![NPM downloads](https://img.shields.io/npm/dm/live-directory.svg?style=flat)](https://www.npmjs.com/package/live-directory)
+[![Language grade: JavaScript](https://img.shields.io/lgtm/grade/javascript/g/kartikk221/live-directory.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/kartikk221/live-directory/context:javascript)
+[![GitHub issues](https://img.shields.io/github/issues/kartikk221/live-directory)](https://github.com/kartikk221/live-directory/issues)
+[![GitHub stars](https://img.shields.io/github/stars/kartikk221/live-directory)](https://github.com/kartikk221/live-directory/stargazers)
+[![GitHub license](https://img.shields.io/github/license/kartikk221/live-directory)](https://github.com/kartikk221/live-directory/blob/master/LICENSE)
+
+</div>
+
 ## Motivation
 Implementing your own template management system which consistently reads/updates template content can be tedious. LiveDirectory aims to solve that by acting as an automated file content store making a directory truly come alive. Built solely on the Node.js FileWatcher API with no external dependencies, LiveDirectory can be an efficient solution for fast and iterative web development.
 
