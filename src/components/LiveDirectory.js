@@ -11,34 +11,37 @@ class LiveDirectory {
         reload: (file) => {},
     };
 
-    constructor({ root_path, file_extensions = [], watcher_delay = 250 }) {
-        // Verify root_path
-        if (typeof root_path !== 'string')
-            throw new Error(
-                'LiveDirectory: constructor.options.root_path must be a String.'
+    constructor({
+        root_path,
+        file_extensions = [],
+        ignore_files = [],
+        ignore_directories = [],
+        watcher_delay = 250,
+    }) {
+        // Verify provided constructor parameter types
+        this._verify_types({
+            root_path: root_path,
+            file_extensions: file_extensions,
+            ignore_files: ignore_files,
+            ignore_directories: ignore_directories,
+            watcher_delay: watcher_delay,
+        });
+
+        // Verify provided directory actually exists and throw error on problem
+        let reference = this;
+        FileSystem.access(root_path, (error) => {
+            if (error) throw error;
+
+            // Create root directory watcher
+            reference.#root_watcher = new DirectoryWatcher(
+                root_path,
+                file_extensions,
+                watcher_delay
             );
 
-        // Verify watcher_delay
-        if (typeof watcher_delay !== 'number')
-            throw new Error(
-                'LiveDirectory: constructor.options.watcher_delay must be a Number.'
-            );
-
-        // Verify file_extensions
-        if (!Array.isArray(file_extensions))
-            throw new Error(
-                'LiveDirectory: constructor.options.file_extensions must be an Array.'
-            );
-
-        // Create root directory watcher
-        this.#root_watcher = new DirectoryWatcher(
-            root_path,
-            file_extensions,
-            watcher_delay
-        );
-
-        // Bind root methods for powering file tree
-        this._bind_root_handlers();
+            // Bind root methods for powering file tree
+            reference._bind_root_handlers();
+        });
     }
 
     /**
@@ -64,6 +67,50 @@ class LiveDirectory {
             throw new Error(`${type} event is not supported on LiveDirectory.`);
 
         this.#handlers[type] = handler;
+    }
+
+    /**
+     * INTERNAL METHOD!
+     * This method verifies provided constructor types.
+     *
+     * @param {Object} data
+     */
+    _verify_types({
+        root_path,
+        file_extensions,
+        ignore_files,
+        ignore_directories,
+        watcher_delay,
+    }) {
+        // Verify root_path
+        if (typeof root_path !== 'string')
+            throw new Error(
+                'LiveDirectory: constructor.options.root_path must be a String.'
+            );
+
+        // Verify watcher_delay
+        if (typeof watcher_delay !== 'number')
+            throw new Error(
+                'LiveDirectory: constructor.options.watcher_delay must be a Number.'
+            );
+
+        // Verify file_extensions
+        if (!Array.isArray(file_extensions))
+            throw new Error(
+                'LiveDirectory: constructor.options.file_extensions must be an Array.'
+            );
+
+        // Verify ignore_files
+        if (!Array.isArray(ignore_files))
+            throw new Error(
+                'LiveDirectory: constructor.options.ignore_files must be an Array.'
+            );
+
+        // Verify ignore_directories
+        if (!Array.isArray(ignore_directories))
+            throw new Error(
+                'LiveDirectory: constructor.options.ignore_directories must be an Array.'
+            );
     }
 
     /**
@@ -122,6 +169,14 @@ class LiveDirectory {
     /* LiveDirectory Getters */
     get files() {
         return this.#files_tree;
+    }
+
+    get path_prefix() {
+        return this.#root_watcher.path_prefix;
+    }
+
+    get tree() {
+        return this.#root_watcher.tree;
     }
 }
 
