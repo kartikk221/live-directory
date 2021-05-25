@@ -1,19 +1,16 @@
 {
   "name": "live-directory",
   "version": "1.0.0",
-  "description": "A simple-to-use dynamic file content manager",
+  "description": "A Simple-To-Use Dynamic Template Content Manager For Webservers",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
-    "dynamic",
-    "content",
-    "manager",
-    "files",
     "html-manager",
     "template-manager",
-    "hot-reloading"
+    "hot-reloading",
+    "webserver"
   ],
   "author": "kartikk221",
   "license": "MIT"
