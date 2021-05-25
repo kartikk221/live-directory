@@ -53,16 +53,17 @@ class LiveFile {
      * @returns {String} String - Rendered Content
      */
     render(options = {}) {
-        return this.#renderer(this.#content, options);
+        return this.#renderer(this.#path, this.#content, options);
     }
 
     /**
+     * INTERNAL METHOD
      * Binds handler for specified type event.
      *
      * @param {String} type
      * @param {Function} handler
      */
-    handle(type, handler) {
+    _handle(type, handler) {
         if (this.#handlers[type] == undefined)
             throw new Error(`${type} event is not supported on LiveFile.`);
 

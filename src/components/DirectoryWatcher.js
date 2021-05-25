@@ -8,6 +8,8 @@ class DirectoryWatcher {
     #root_path;
     #watcher_delay;
     #extensions = [];
+    #ignore_directories = [];
+    #ignore_files = [];
     #watchers = {};
     #tree = {
         normal: {},
@@ -24,10 +26,12 @@ class DirectoryWatcher {
     };
 
     // Create Root Watcher On Construction
-    constructor(path, extensions, delay) {
+    constructor({ path, extensions, delay, ignore_files, ignore_directories }) {
         this.#root_path = path;
         this.#extensions = extensions;
         this.#watcher_delay = delay;
+        this.#ignore_files = ignore_files;
+        this.#ignore_directories = ignore_directories;
         this._watch(path);
         this._recalibrate_tree();
     }
@@ -116,7 +120,7 @@ class DirectoryWatcher {
      * @param {String} path
      * @returns {String} String
      */
-    _ensure_trailing_slash(path) {
+    static _ensure_trailing_slash(path) {
         // Prevent double slashing on '/' path scenario
         if (path.length < 2) return path;
 
@@ -132,12 +136,12 @@ class DirectoryWatcher {
      * @param {Array} extensions
      * @returns {Promise} Promise -> Object
      */
-    _generate_tree(path, extensions = [], flat_tree = {}, top_level = true) {
+    _generate_tree(path, flat_tree = {}, top_level = true) {
         let tree = {};
         let reference = this;
 
         // Ensure path has a trailing slash for recursion & store current path in each layer
-        path = this._ensure_trailing_slash(path);
+        path = DirectoryWatcher._ensure_trailing_slash(path);
         tree[this.#path_prefix] = path;
 
         // Asynchronously read directory to process into a tree
@@ -158,36 +162,51 @@ class DirectoryWatcher {
 
                         // Recursively generate further directory tree for directories
                         if (file.isDirectory()) {
-                            let subpath = path + file_name;
-                            let subtree = await reference._generate_tree(
-                                subpath,
-                                extensions,
-                                flat_tree,
-                                false
-                            );
+                            // Filter directories based on ignore_directories
+                            let filter_items = reference.#ignore_directories;
+                            let should_filter = filter_items.length > 0;
+                            let filter_check = !should_filter
+                                ? true
+                                : !filter_items.includes(file_name);
 
-                            flat_tree[subpath] = 'directory:' + file_name;
-                            tree[file_name] = subtree;
+                            if (filter_check) {
+                                let subpath = path + file_name;
+                                let subtree = await reference._generate_tree(
+                                    subpath,
+                                    flat_tree,
+                                    false
+                                );
+
+                                flat_tree[subpath] = 'directory:' + file_name;
+                                tree[file_name] = subtree;
+                            }
                         }
 
                         // Store files in tree by matching against extensions
                         if (file.isFile()) {
-                            if (extensions.length > 0) {
-                                // Filter extensions to match ending of filename
-                                let extension_check = extensions.filter(
-                                    (extension) => file_name.endsWith(extension)
-                                );
+                            // Filter based on extensions if specified
+                            let file_extensions = reference.#extensions;
+                            let should_check = file_extensions.length > 0;
+                            let extension_check = !should_check
+                                ? true
+                                : file_extensions.filter((n) =>
+                                      file_name.endsWith(n)
+                                  ).length > 0;
 
-                                // Verify current file has required extension
-                                if (extension_check.length > 0) {
+                            if (extension_check) {
+                                // Filter files based on ignore_files
+                                let filter_items = reference.#ignore_files;
+                                let should_filter = filter_items.length > 0;
+                                let filter_check = !should_filter
+                                    ? true
+                                    : !filter_items.includes(file_name);
+
+                                // Add file to tree if it passes extension and filter check
+                                if (filter_check) {
                                     tree[file_name] = path + file_name;
                                     flat_tree[tree[file_name]] =
                                         'file:' + file_name;
                                 }
-                            } else {
-                                tree[file_name] = path + file_name;
-                                flat_tree[tree[file_name]] =
-                                    'file:' + file_name;
                             }
                         }
 
@@ -217,7 +236,7 @@ class DirectoryWatcher {
         // Generate initial tree if none provided through recursion
         let reference = this;
         if (tree == undefined)
-            tree = await this._generate_tree(this.#root_path, this.#extensions);
+            tree = await this._generate_tree(this.#root_path);
 
         // Parse current flat tree keys to iterate over
         let current_tree = this.#tree;

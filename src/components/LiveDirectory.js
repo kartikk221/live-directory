@@ -5,7 +5,7 @@ const LiveFile = require('./LiveFile.js');
 class LiveDirectory {
     #root_watcher;
     #files_tree = {};
-    #default_renderer = (content, options) => content;
+    #default_renderer = (path, content, options) => content;
     #handlers = {
         error: (path, error) => {},
         reload: (file) => {},
@@ -27,17 +27,22 @@ class LiveDirectory {
             watcher_delay: watcher_delay,
         });
 
+        // Ensure root_path has a trailing slash for parsing purposes
+        root_path = DirectoryWatcher._ensure_trailing_slash(root_path);
+
         // Verify provided directory actually exists and throw error on problem
         let reference = this;
         FileSystem.access(root_path, (error) => {
             if (error) throw error;
 
             // Create root directory watcher
-            reference.#root_watcher = new DirectoryWatcher(
-                root_path,
-                file_extensions,
-                watcher_delay
-            );
+            reference.#root_watcher = new DirectoryWatcher({
+                path: root_path,
+                extensions: file_extensions,
+                ignore_files: ignore_files,
+                ignore_directories: ignore_directories,
+                delay: watcher_delay,
+            });
 
             // Bind root methods for powering file tree
             reference._bind_root_handlers();
@@ -50,9 +55,7 @@ class LiveDirectory {
      * @param {String} relative_path
      * @returns {LiveFile} LiveFile
      */
-    file(relative_path) {
-        // Convert relative path to absolute path
-        relative_path = this.#root_watcher.root + relative_path;
+    get(relative_path) {
         return this.#files_tree[relative_path];
     }
 
@@ -67,6 +70,26 @@ class LiveDirectory {
             throw new Error(`${type} event is not supported on LiveDirectory.`);
 
         this.#handlers[type] = handler;
+    }
+
+    /**
+     * This method can be used to set a default renderer for all files.
+     *
+     * @param {Function} renderer
+     */
+    set_default_renderer(renderer) {
+        this.#default_renderer = renderer;
+    }
+
+    /**
+     * INTERNAL METHOD!
+     * This method converts absolute path into a relative path by converting root path into a '/'
+     *
+     * @param {String} path
+     * @returns {String} String
+     */
+    _get_relative_path(path) {
+        return path.replace(this.#root_watcher.root, '/');
     }
 
     /**
@@ -134,20 +157,21 @@ class LiveDirectory {
      * @param {String} path
      */
     _add_file(path) {
-        if (this.#files_tree[path] == undefined) {
-            this.#files_tree[path] = new LiveFile({
+        let relative_path = this._get_relative_path(path);
+        if (this.#files_tree[relative_path] == undefined) {
+            this.#files_tree[relative_path] = new LiveFile({
                 path: path,
                 watcher_delay: this.#root_watcher.watcher_delay,
                 renderer: this.#default_renderer,
             });
 
             // Bind Error Handler
-            this.#files_tree[path].handle('error', (error) =>
+            this.#files_tree[relative_path]._handle('error', (error) =>
                 this.#handlers.error(path, error)
             );
 
             // Bind Reload Handler
-            this.#files_tree[path].handle('reload', () =>
+            this.#files_tree[relative_path]._handle('reload', () =>
                 this.#handlers.reload(this.#files_tree[path])
             );
         }
