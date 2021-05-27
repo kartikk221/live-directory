@@ -6,6 +6,14 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "homepage": "https://github.com/kartikk221/live-directory",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com:kartikk221/live-directory.git"
+  },
+  "bugs": {
+    "url": "https://github.com/kartikk221/live-directory/issues"
+  },
   "keywords": [
     "html-manager",
     "template-manager",
