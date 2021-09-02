@@ -94,15 +94,9 @@ class LiveFile {
         let reference = this;
 
         // Create FileWatcher For File
-        this.#watcher = FileSystem.watch(
-            this.#path,
-            {
-                encoding: 'utf8',
-            },
-            (event, file_name) => {
-                if (reference._delay_check()) reference._reload_content();
-            }
-        );
+        this.#watcher = FileSystem.watch(this.#path, (event, file_name) => {
+            if (reference._delay_check()) reference._reload_content();
+        });
 
         // Bind FSWatcher Error Handler To Prevent Execution Halt
         this.#watcher.on('error', (error) => this.#handlers.error(error));
@@ -114,20 +108,14 @@ class LiveFile {
      */
     _reload_content() {
         let reference = this;
-        FileSystem.readFile(
-            this.#path,
-            {
-                encoding: 'utf8',
-            },
-            (error, content) => {
-                // Report error through error handler
-                if (error) return reference.#handlers.error(error);
+        FileSystem.readFile(this.#path, (error, content) => {
+            // Report error through error handler
+            if (error) return reference.#handlers.error(error);
 
-                // Update content and trigger reload event
-                reference.#content = content;
-                reference.#handlers.reload(content);
-            }
-        );
+            // Update content and trigger reload event
+            reference.#content = content;
+            reference.#handlers.reload(content);
+        });
     }
 
     /**
