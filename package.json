@@ -1,6 +1,6 @@
 {
   "name": "live-directory",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A Simple-To-Use Dynamic Template Content Manager For Webservers",
   "main": "index.js",
   "scripts": {
