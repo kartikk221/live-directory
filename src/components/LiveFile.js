@@ -2,6 +2,7 @@ const FileSystem = require('fs');
 
 class LiveFile {
     #path;
+    #extension = '';
     #content;
     #watcher;
     #watcher_delay;
@@ -14,9 +15,13 @@ class LiveFile {
 
     constructor({ path, watcher_delay, renderer }) {
         this.#path = path;
+        const path_chunks = this.#path.split('.');
+
+        this.#extension = path_chunks[path_chunks.length - 1];
         this.#watcher_delay = watcher_delay;
         this.#last_update = Date.now() - watcher_delay;
         this.#renderer = renderer;
+
         this._init_watcher();
         this._reload_content();
     }
@@ -130,6 +135,10 @@ class LiveFile {
     /* LiveFile Getters */
     get path() {
         return this.#path;
+    }
+
+    get extension() {
+        return this.#extension;
     }
 
     get content() {
