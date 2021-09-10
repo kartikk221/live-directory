@@ -3,8 +3,8 @@ const FileSystem = require('fs');
 class LiveFile {
     #path;
     #extension = '';
+    #buffer;
     #content;
-    #content_string;
     #watcher;
     #watcher_delay;
     #last_update;
@@ -103,13 +103,13 @@ class LiveFile {
      */
     _reload_content() {
         let reference = this;
-        FileSystem.readFile(this.#path, (error, content) => {
+        FileSystem.readFile(this.#path, (error, buffer) => {
             // Report error through error handler
             if (error) return reference.#handlers.error(error);
 
             // Update content and trigger reload event
-            reference.#content = content;
-            reference.#content_string = content.toString();
+            reference.#buffer = buffer;
+            reference.#content = buffer.toString();
             reference.#handlers.reload(content);
         });
     }
@@ -120,8 +120,8 @@ class LiveFile {
      */
     _destroy() {
         this.#watcher.close();
-        this.#content = Buffer.from('');
-        this.#content_string = '';
+        this.#content = '';
+        this.#buffer = Buffer.from('');
     }
 
     /* LiveFile Getters */
@@ -137,8 +137,8 @@ class LiveFile {
         return this.#content;
     }
 
-    get content_string() {
-        return this.#content_string;
+    get buffer() {
+        return this.#buffer;
     }
 
     get last_update() {
