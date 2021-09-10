@@ -175,7 +175,8 @@ Below is a breakdown of the `LiveFile` instance class that represents all files.
 | Property  | Type     | Description                |
 | :-------- | :------- | :------------------------- |
 | `path` | `String` | System file path. |
-| `content` | `String` | File text content. |
+| `content` | `Buffer` | File raw content. |
+| `content_string` | `String` | File content in `String` format. |
 | `last_update` | `Number` | Last file text content update timestamp in **milliseconds** |
 
 #### LiveFile Methods
