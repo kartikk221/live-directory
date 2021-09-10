@@ -4,6 +4,7 @@ class LiveFile {
     #path;
     #extension = '';
     #content;
+    #content_string;
     #watcher;
     #watcher_delay;
     #last_update;
@@ -24,17 +25,6 @@ class LiveFile {
 
         this._init_watcher();
         this._reload_content();
-    }
-
-    /**
-     * This method can be used to overwrite/update the content of a file.
-     * This is useful for applying your post-processing on the reload event
-     * and then updating the newly read content.
-     *
-     * @param {String} content
-     */
-    set_content(content) {
-        this.#content = content;
     }
 
     /**
@@ -119,6 +109,7 @@ class LiveFile {
 
             // Update content and trigger reload event
             reference.#content = content;
+            reference.#content_string = content.toString();
             reference.#handlers.reload(content);
         });
     }
@@ -129,7 +120,8 @@ class LiveFile {
      */
     _destroy() {
         this.#watcher.close();
-        this.#content = '';
+        this.#content = Buffer.from('');
+        this.#content_string = '';
     }
 
     /* LiveFile Getters */
@@ -143,6 +135,10 @@ class LiveFile {
 
     get content() {
         return this.#content;
+    }
+
+    get content_string() {
+        return this.#content_string;
     }
 
     get last_update() {
