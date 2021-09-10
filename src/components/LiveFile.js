@@ -110,7 +110,7 @@ class LiveFile {
             // Update content and trigger reload event
             reference.#buffer = buffer;
             reference.#content = buffer.toString();
-            reference.#handlers.reload(content);
+            reference.#handlers.reload(reference.#content);
         });
     }
 
