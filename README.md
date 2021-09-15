@@ -175,6 +175,8 @@ Below is a breakdown of the `LiveFile` instance class that represents all files.
 | Property  | Type     | Description                |
 | :-------- | :------- | :------------------------- |
 | `path` | `String` | System file path. |
+| `extension` | `String` | File extension. |
+| `etag` | `String` | Unique etag compatible file hash. |
 | `content` | `String` | File text content. |
 | `buffer` | `Buffer` | File raw content. |
 | `last_update` | `Number` | Last file text content update timestamp in **milliseconds** |
