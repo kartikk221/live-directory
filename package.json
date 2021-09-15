@@ -21,5 +21,8 @@
     "webserver"
   ],
   "author": "kartikk221",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "etag": "^1.8.1"
+  }
 }

@@ -1,8 +1,10 @@
+const etag = require('etag');
 const FileSystem = require('fs');
 
 class LiveFile {
     #path;
-    #extension = '';
+    #etag;
+    #extension;
     #buffer;
     #content;
     #watcher;
@@ -110,6 +112,7 @@ class LiveFile {
             // Update content and trigger reload event
             reference.#buffer = buffer;
             reference.#content = buffer.toString();
+            reference.#etag = etag(reference.#buffer);
             reference.#handlers.reload(reference.#content);
         });
     }
@@ -131,6 +134,10 @@ class LiveFile {
 
     get extension() {
         return this.#extension;
+    }
+
+    get etag() {
+        return this.#etag;
     }
 
     get content() {
