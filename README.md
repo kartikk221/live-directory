@@ -144,6 +144,10 @@ Below is a breakdown of the `LiveDirectory` class generated when creating a new 
   * **Default**: `[]`
 * `watcher_delay` [`Number`]: Specify delay between processing new FileWatcher events in **milliseconds**.
   * **Default**: `250`
+* `read_delay` [`Number`]: Specify delay amount before reading new file content in **milliseconds**.
+  * **Default**: `250`
+* `read_retries` [`Number`]: Number of times to retry reading new file content on empty reads.
+  * **Default**: `2`
 
 #### LiveDirectory Properties
 | Property  | Type     | Description                |

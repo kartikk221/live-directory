@@ -9,6 +9,8 @@ class LiveFile {
     #content;
     #watcher;
     #watcher_delay;
+    #read_delay;
+    #read_retries;
     #last_update;
     #renderer;
     #handlers = {
@@ -16,17 +18,19 @@ class LiveFile {
         error: (error) => {},
     };
 
-    constructor({ path, watcher_delay, renderer }) {
+    constructor({ path, watcher_delay, read_delay = 250, read_retries = 2, renderer }) {
         this.#path = path;
         const path_chunks = this.#path.split('.');
 
         this.#extension = path_chunks[path_chunks.length - 1];
         this.#watcher_delay = watcher_delay;
+        this.#read_delay = read_delay;
+        this.#read_retries = read_retries;
         this.#last_update = Date.now() - watcher_delay;
         this.#renderer = renderer;
 
         this._init_watcher();
-        this._reload_content();
+        this._reload_content(read_delay, read_retries);
     }
 
     /**
@@ -92,7 +96,8 @@ class LiveFile {
 
         // Create FileWatcher For File
         this.#watcher = FileSystem.watch(this.#path, (event, file_name) => {
-            if (reference._delay_check()) reference._reload_content();
+            if (reference._delay_check())
+                reference._reload_content(reference.#read_delay, reference.#read_retries);
         });
 
         // Bind FSWatcher Error Handler To Prevent Execution Halt
@@ -103,18 +108,28 @@ class LiveFile {
      * INTERNAL METHOD!
      * This method reads/updates content for current live file.
      */
-    _reload_content() {
-        let reference = this;
-        FileSystem.readFile(this.#path, (error, buffer) => {
-            // Report error through error handler
-            if (error) return reference.#handlers.error(error);
+    _reload_content(delay = 0, retries = 0) {
+        setTimeout(
+            (reference, del, ret) =>
+                FileSystem.readFile(this.#path, (error, buffer) => {
+                    // Report error through error handler
+                    if (error) return reference.#handlers.error(error);
 
-            // Update content and trigger reload event
-            reference.#buffer = buffer;
-            reference.#content = buffer.toString();
-            reference.#etag = etag(reference.#buffer);
-            reference.#handlers.reload(reference.#content);
-        });
+                    // Retry if no content was read and retries have been defined
+                    if (buffer.length == 0 && ret > 0)
+                        return reference._reload_content(del, ret - 1);
+
+                    // Update content and trigger reload event
+                    reference.#buffer = buffer;
+                    reference.#content = buffer.toString();
+                    reference.#etag = etag(reference.#buffer);
+                    reference.#handlers.reload(reference.#content);
+                }),
+            delay,
+            this,
+            delay,
+            retries
+        );
     }
 
     /**
