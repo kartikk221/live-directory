@@ -98,36 +98,22 @@ class LiveDirectory {
      *
      * @param {Object} data
      */
-    _verify_types({
-        root_path,
-        file_extensions,
-        ignore_files,
-        ignore_directories,
-        watcher_delay,
-    }) {
+    _verify_types({ root_path, file_extensions, ignore_files, ignore_directories, watcher_delay }) {
         // Verify root_path
         if (typeof root_path !== 'string')
-            throw new Error(
-                'LiveDirectory: constructor.options.root_path must be a String.'
-            );
+            throw new Error('LiveDirectory: constructor.options.root_path must be a String.');
 
         // Verify watcher_delay
         if (typeof watcher_delay !== 'number')
-            throw new Error(
-                'LiveDirectory: constructor.options.watcher_delay must be a Number.'
-            );
+            throw new Error('LiveDirectory: constructor.options.watcher_delay must be a Number.');
 
         // Verify file_extensions
         if (!Array.isArray(file_extensions))
-            throw new Error(
-                'LiveDirectory: constructor.options.file_extensions must be an Array.'
-            );
+            throw new Error('LiveDirectory: constructor.options.file_extensions must be an Array.');
 
         // Verify ignore_files
         if (!Array.isArray(ignore_files))
-            throw new Error(
-                'LiveDirectory: constructor.options.ignore_files must be an Array.'
-            );
+            throw new Error('LiveDirectory: constructor.options.ignore_files must be an Array.');
 
         // Verify ignore_directories
         if (!Array.isArray(ignore_directories))
@@ -145,9 +131,7 @@ class LiveDirectory {
         this.#root_watcher.handle('file_add', (path) => this._add_file(path));
 
         // Bind file_remove event handler
-        this.#root_watcher.handle('file_remove', (path) =>
-            this._remove_file(path)
-        );
+        this.#root_watcher.handle('file_remove', (path) => this._remove_file(path));
     }
 
     /**
@@ -171,9 +155,12 @@ class LiveDirectory {
             );
 
             // Bind Reload Handler
-            this.#files_tree[relative_path]._handle('reload', () =>
-                this.#handlers.reload(this.#files_tree[path])
-            );
+            const reference = this;
+            this.#files_tree[relative_path]._handle('reload', () => {
+                const live_file = reference.#files_tree[relative_path];
+                if (typeof live_file.content == 'string')
+                    reference.#handlers.reload(reference.#files_tree[relative_path]);
+            });
         }
     }
 
