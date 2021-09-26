@@ -1,150 +1,120 @@
 const etag = require('etag');
 const FileSystem = require('fs');
+const { async_wait, wrap_object } = require('../shared/operators');
 
 class LiveFile {
-    #path;
     #etag;
     #extension;
     #buffer;
     #content;
-    #watcher;
-    #watcher_delay;
-    #read_delay;
-    #read_retries;
     #last_update;
-    #renderer;
-    #handlers = {
-        reload: (content) => {},
-        error: (error) => {},
+    #options = {
+        path: '',
+        retry: {
+            every: 300,
+            max: 3,
+        },
     };
 
-    constructor({ path, watcher_delay, read_delay = 250, read_retries = 2, renderer }) {
-        this.#path = path;
-        const path_chunks = this.#path.split('.');
+    constructor(options = this.#options) {
+        // Wrap options object with provided object
+        wrap_object(this.#options, options);
 
-        this.#extension = path_chunks[path_chunks.length - 1];
-        this.#watcher_delay = watcher_delay;
-        this.#read_delay = read_delay;
-        this.#read_retries = read_retries;
-        this.#last_update = Date.now() - watcher_delay;
-        this.#renderer = renderer;
-
-        this._init_watcher();
-        this._reload_content(read_delay, read_retries);
+        // Determine the extension of the file
+        this.#extension = this.#options.path.split('.');
+        this.#extension = this.#extension[this.#extension.length - 1];
     }
 
+    #reload_promise;
+    #reload_resolve;
+    #reload_reject;
+
     /**
-     * This method can be used to set/update the render function for current live file.
+     * Reloads buffer/content for file asynchronously with retry policy.
      *
-     * @param {Function} renderer
+     * @param {Boolean} fresh
+     * @param {Number} count
+     * @returns {Promise}
      */
-    set_renderer(renderer) {
-        if (typeof renderer !== 'function')
-            throw new Error(
-                'set_renderer(renderer) -> renderer must be a Function -> (content, options) => {}'
-            );
+    reload(fresh = true, count = 0) {
+        const reference = this;
+        if (fresh) {
+            // Reuse promise if there if one pending
+            if (this.#reload_promise instanceof Promise) return this.#reload_promise;
 
-        this.#renderer = renderer;
-    }
+            // Create a new promise for fresh lookups
+            this.#reload_promise = new Promise((resolve, reject) => {
+                reference.#reload_resolve = resolve;
+                reference.#reload_reject = reject;
+            });
+        }
 
-    /**
-     * This method can be used to render content by passing in appropriate options to the renderer.
-     *
-     * @param {Object} options
-     * @returns {String} String - Rendered Content
-     */
-    render(options = {}) {
-        return this.#renderer(this.#path, this.#content, options);
-    }
+        // Perform filesystem lookup query
+        FileSystem.readFile(this.#options.path, async (error, buffer) => {
+            // Pipe filesystem error through promise
+            if (error) {
+                reference._flush_ready();
+                return reference.#reload_reject(error);
+            }
 
-    /**
-     * INTERNAL METHOD
-     * Binds handler for specified type event.
-     *
-     * @param {String} type
-     * @param {Function} handler
-     */
-    _handle(type, handler) {
-        if (this.#handlers[type] == undefined)
-            throw new Error(`${type} event is not supported on LiveFile.`);
+            // Perform retries in accordance with retry policy
+            // This is to prevent empty reads on atomicity based modifications from third-party programs
+            const { every, max } = reference.#options.retry;
+            if (buffer.length == 0 && count < max) {
+                await async_wait(every);
+                return reference.reload(false, count + 1);
+            }
 
-        this.#handlers[type] = handler;
-    }
+            // Update instance buffer/content/etag/last_update variables
+            reference.#buffer = buffer;
+            reference.#content = buffer.toString();
+            reference.#etag = etag(buffer);
+            reference.#last_update = Date.now();
 
-    /**
-     * INTERNAL METHOD!
-     * This method performs a check against last_update timestamp
-     * to ensure sufficient time has passed since last watcher update.
-     *
-     * @param {Boolean} touch
-     * @returns {Boolean} Boolean
-     */
-    _delay_check(touch = true) {
-        let last_update = this.#last_update;
-        let watcher_delay = this.#watcher_delay;
-        let result = Date.now() - last_update > watcher_delay;
-        if (result && touch) this.#last_update = Date.now();
-        return result;
-    }
-
-    /**
-     * INTERNAL METHOD!
-     * This method initiates the FileWatcher used for current live file.
-     */
-    _init_watcher() {
-        let reference = this;
-
-        // Create FileWatcher For File
-        this.#watcher = FileSystem.watch(this.#path, (event, file_name) => {
-            if (reference._delay_check())
-                reference._reload_content(reference.#read_delay, reference.#read_retries);
+            // Cleanup reload promises and methods
+            reference.#reload_resolve();
+            reference._flush_ready();
+            reference.#reload_resolve = null;
+            reference.#reload_reject = null;
+            reference.#reload_promise = null;
         });
 
-        // Bind FSWatcher Error Handler To Prevent Execution Halt
-        this.#watcher.on('error', (error) => this.#handlers.error(error));
+        return this.#reload_promise;
+    }
+
+    #ready_promise;
+    #ready_resolve;
+
+    /**
+     * Flushes pending ready promise.
+     * @private
+     */
+    _flush_ready() {
+        if (typeof this.#ready_resolve == 'function') {
+            this.#ready_resolve();
+            this.#ready_resolve = null;
+        }
     }
 
     /**
-     * INTERNAL METHOD!
-     * This method reads/updates content for current live file.
+     * Returns a promise which resolves once first reload is complete.
+     *
+     * @returns {Promise}
      */
-    _reload_content(delay = 0, retries = 0) {
-        setTimeout(
-            (reference, del, ret) =>
-                FileSystem.readFile(this.#path, (error, buffer) => {
-                    // Report error through error handler
-                    if (error) return reference.#handlers.error(error);
+    ready() {
+        // Return true if no ready promise exists
+        if (this.#ready_promise === true) return Promise.resolve();
 
-                    // Retry if no content was read and retries have been defined
-                    if (buffer.length == 0 && ret > 0)
-                        return reference._reload_content(del, ret - 1);
+        // Create a Promise if one does not exist for ready event
+        if (this.#ready_promise === undefined)
+            this.#ready_promise = new Promise((resolve) => (this.#ready_resolve = resolve));
 
-                    // Update content and trigger reload event
-                    reference.#buffer = buffer;
-                    reference.#content = buffer.toString();
-                    reference.#etag = etag(reference.#buffer);
-                    reference.#handlers.reload(reference.#content);
-                }),
-            delay,
-            this,
-            delay,
-            retries
-        );
-    }
-
-    /**
-     * INTERNAL METHOD!
-     * This method can be used to destroy current live file and its watcher.
-     */
-    _destroy() {
-        this.#watcher.close();
-        this.#content = '';
-        this.#buffer = Buffer.from('');
+        return this.#ready_promise;
     }
 
     /* LiveFile Getters */
     get path() {
-        return this.#path;
+        return this.#options.path;
     }
 
     get extension() {

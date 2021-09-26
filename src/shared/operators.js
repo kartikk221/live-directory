@@ -1,67 +1,76 @@
+const Path = require('path');
+const FileSystem = require('fs');
+
 /**
- * INTERNAL METHOD!
- * This method acts as an asynchronous forEach loop.
- * @param {Array} items
- * @param {Function} handler
- * @returns {Promise} Promise
+ * Returns a promise which is resolved after provided delay in milliseconds.
+ *
+ * @param {Number} delay
+ * @returns {Promise}
  */
-function async_for_each(items, handler, cursor = 0, final) {
-    // Return a top level promise to be resolved after cursor hits last item
-    if (final == undefined)
-        return new Promise((res, _) => async_for_each(items, handler, 0, res));
-
-    // Iterate through each item and call each handler with iteration onto next with next callback
-    if (cursor < items.length)
-        return handler(items[cursor], () =>
-            async_for_each(items, handler, cursor + 1, final)
-        );
-
-    // Resolve master promise at end of exeuction
-    return final();
+function async_wait(delay) {
+    return new Promise((resolve, reject) => setTimeout((res) => res(), delay, resolve));
 }
 
-function throttled_for_each(
-    items,
-    per_eloop = 300,
-    handler,
-    cursor = 0,
-    final
-) {
-    // Return top level promise which is resolved after execution
-    if (final == undefined)
-        return new Promise((resolve, reject) => {
-            if (items.length == 0) return resolve();
-            return throttled_for_each(
-                items,
-                per_eloop,
-                handler,
-                cursor,
-                resolve
-            );
+/**
+ * Returns provided path into absolute system path with forward slashes.
+ *
+ * @param {String} path
+ * @returns {String}
+ */
+function resolve_path(path) {
+    return forward_slashes(Path.resolve(path));
+}
+
+/**
+ * Returns provided path with forward slashes.
+ *
+ * @param {String} path
+ * @returns {String}
+ */
+function forward_slashes(path) {
+    return path.split('\\').join('/');
+}
+
+/**
+ * Writes values from focus object onto base object.
+ *
+ * @param {Object} obj1 Base Object
+ * @param {Object} obj2 Focus Object
+ */
+function wrap_object(original, target) {
+    Object.keys(target).forEach((key) => {
+        if (typeof target[key] == 'object') {
+            if (original[key] === null || typeof original[key] !== 'object') original[key] = {};
+            wrap_object(original[key], target[key]);
+        } else {
+            original[key] = target[key];
+        }
+    });
+}
+
+/**
+ * Determines whether a path is accessible or not by FileSystem package.
+ *
+ * @param {String} path
+ * @returns {Promise}
+ */
+function is_accessible_path(path) {
+    return new Promise((resolve, reject) => {
+        // Destructure constants for determine read & write codes
+        const CONSTANTS = FileSystem.constants;
+        const IS_VALID = CONSTANTS.F_OK;
+        const HAS_PERMISSION = CONSTANTS.W_OK;
+        FileSystem.access(path, IS_VALID | HAS_PERMISSION, (error) => {
+            if (error) return resolve(false);
+            resolve(true);
         });
-
-    // Calculuate upper bound and perform synchronous for loop
-    let upper_bound =
-        cursor + per_eloop >= items.length ? items.length : cursor + per_eloop;
-    for (let i = cursor; i < upper_bound; i++) handler(items[i]);
-
-    // Offset cursor and queue next iteration with a timeout
-    cursor = upper_bound;
-    if (cursor < items.length)
-        return setTimeout(
-            (a, b, c, d, e) => throttled_for_each(a, b, c, d, e),
-            0,
-            items,
-            per_eloop,
-            handler,
-            cursor,
-            final
-        );
-
-    return final();
+    });
 }
 
 module.exports = {
-    async_for_each: async_for_each,
-    throttled_for_each: throttled_for_each,
+    async_wait,
+    resolve_path,
+    forward_slashes,
+    wrap_object,
+    is_accessible_path,
 };
