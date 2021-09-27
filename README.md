@@ -112,9 +112,18 @@ Below is a breakdown of the `LiveDirectory` class generated when creating a new 
 * `path` [`String`]: Path to the directory.
   * **Example**: `./templates/`
   * **Required** for a LiveDirectory Instance.
-* `ignore` [`Function`]: Ignore/Filter function for deciding which files to load.
-  * **Example**: `(String: path) => path.includes('node_modules')`
-  * **Usage**: Return `true` through the function when ignoring a file and vice versa.
+* `keep` [`Object`|`Function`]: Whitelist filter that can either be an object or a function.
+  * **Object Schema**:
+    * `names` [`Array`]: List of file names to keep.
+    * `extensions` [`Array`]: List of file extensions to keep.
+  * **Function Schema**: `(String: path) => { /* Return true to keep */}`
+  * **Note!** the `keep` filter is like a whitelist and is applied **before** the `ignore` filter.
+* `ignore` [`Object`|`Function`]: Blacklist filter that can either be an object or a function.
+  * **Object Schema**:
+    * `names` [`Array`]: List of file/directory names to ignore.
+    * `extensions` [`Array`]: List of file extensions to ignore.
+  * **Function Schema**: `(String: path) => { /* Return true to ignore */}`
+  * **Note!** the `ignore` filter is like a global blacklist and thus is applied after the `keep` filter.
 * `retry` [`Object`]: File content reading retry policy.
   * `every` [`Number`]: Delay between retries in **milliseconds**.
   * `max` [`Number`]: Maximum number of retries.

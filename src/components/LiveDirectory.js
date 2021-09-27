@@ -14,7 +14,8 @@ class LiveDirectory extends EventEmitter {
     #tree;
     #options = {
         path: '',
-        ignore: undefined,
+        keep: null,
+        ignore: null,
         retry: {
             every: 250,
             max: 2,
@@ -26,7 +27,12 @@ class LiveDirectory extends EventEmitter {
      *
      * @param {Object} options
      * @param {String} options.path Path of the desired directory
-     * @param {function(string):Boolean} options.ignore Ignore function that prevents a file from being loaded when returned true.
+     * @param {Object} options.keep Keep/Whitelist filter.
+     * @param {Array} options.keep.names List of files/directories to keep/whitelist.
+     * @param {Array} options.keep.extensions List of file extensions to keep/whitelist.
+     * @param {Object} options.ignore Ignore/Blacklist filter
+     * @param {Array} options.ignore.names List of files/directories to ignore/blacklist.
+     * @param {Array} options.ignore.extensions List of file extensions to ignore/blacklist.
      */
     constructor(options = this.#options) {
         super();
@@ -39,11 +45,148 @@ class LiveDirectory extends EventEmitter {
         options.path = resolve_path(options.path);
         wrap_object(this.#options, options);
 
+        // Parse user provided filters into methods
+        this._parse_keep_filters();
+        this._parse_ignore_filters();
+
         // Create a empty directory tree for root path
         this.#tree = new DirectoryTree();
 
         // Initiate watcher
         this._initiate_watcher();
+    }
+
+    #filters = {
+        keep: null,
+        ignore: null,
+    };
+
+    /**
+     * Parses user provided keep filters into a application method for fast checking.
+     * @private
+     */
+    _parse_keep_filters() {
+        const keep = this.#options.keep;
+
+        // Parse keep filters if defined
+        if (keep) {
+            // If user provided a function, we simply passthrough that function to the apply method
+            if (typeof keep == 'function') {
+                this.#filters.keep = keep;
+            } else if (typeof keep == 'object') {
+                // Destructure and store the keep filters into key
+                const { names, extensions } = this.#options.keep;
+                const verify_names = Array.isArray(names) && names.length > 0;
+                const verify_extensions = Array.isArray(extensions) && extensions.length > 0;
+
+                // Create and bind an apply filter for enforcing key comparisons
+                if (verify_names || verify_extensions)
+                    this.#filters.keep = (path, stats) => {
+                        // Only apply keep filters on files as full tree traversal is neccessary to retrieve all files
+                        if (stats == undefined || stats.isDirectory()) return true;
+
+                        // Apply names whitelist if a names array is provided
+                        if (verify_names) {
+                            let verdict = false;
+                            for (let i = 0; i < names.length; i++) {
+                                let current = names[i];
+                                if (path.endsWith(current)) {
+                                    verdict = true;
+                                    break;
+                                }
+                            }
+
+                            // Return false for keeping if matching against names fails
+                            if (!verdict) return false;
+                        }
+
+                        // Apply extensions whitelist to files only
+                        if (verify_extensions) {
+                            let verdict = false;
+                            for (let i = 0; i < extensions.length; i++) {
+                                let current = extensions[i];
+                                if (path.endsWith(current)) verdict = true;
+                            }
+
+                            // Return false for keeping if matching against file extension fails
+                            if (!verdict) return false;
+                        }
+
+                        return true;
+                    };
+            }
+        }
+    }
+
+    /**
+     * Parses user provided keep filters into a application method for fast checking.
+     * @private
+     */
+    _parse_ignore_filters() {
+        const ignore = this.#options.ignore;
+
+        // Parse keep filters if defined
+        if (ignore) {
+            // If user provided a function, we simply passthrough that function to the apply method
+            if (typeof ignore == 'function') {
+                this.#filters.ignore = ignore;
+            } else if (typeof ignore == 'object') {
+                // Destructure and store the keep filters into key
+                const { names, extensions } = ignore;
+                const verify_names = Array.isArray(names) && names.length > 0;
+                const verify_extensions = Array.isArray(extensions) && extensions.length > 0;
+
+                // Create and bind an apply filter for enforcing key comparisons
+                if (verify_names || verify_extensions)
+                    this.#filters.ignore = (path, stats) => {
+                        // Apply names blacklist if a names array is provided
+                        if (verify_names) {
+                            let verdict = false;
+                            for (let i = 0; i < names.length; i++) {
+                                let current = names[i];
+                                if (path.endsWith(current)) {
+                                    verdict = true;
+                                    break;
+                                }
+                            }
+
+                            // Return true to filter current item if name is matched against blacklist
+                            if (verdict) return true;
+                        }
+
+                        // Apply extensions blacklist to files only
+                        if (verify_extensions && stats && stats.isFile()) {
+                            let verdict = false;
+                            for (let i = 0; i < extensions.length; i++) {
+                                let current = extensions[i];
+                                if (path.endsWith(current)) verdict = true;
+                            }
+
+                            // Return false for keeping if matching against file extension fails
+                            if (verdict) return true;
+                        }
+
+                        return false;
+                    };
+            }
+        }
+    }
+
+    /**
+     * Applies instance filters on provided path to return a verdict to ignore.
+     *
+     * @private
+     * @param {String} path
+     * @returns {Boolean}
+     */
+    _ignore_path(path, stats) {
+        // Apply keep/whitelist filter if available
+        if (this.#filters.keep && !this.#filters.keep(path, stats)) return true;
+
+        // Apply ignore/blacklist filter if available
+        if (this.#filters.ignore && this.#filters.ignore(path, stats)) return true;
+
+        return false;
     }
 
     /**
@@ -60,8 +203,8 @@ class LiveDirectory extends EventEmitter {
             );
 
         // Initiate chokidar watcher instance for root path
-        this.#watcher = chokidar.watch(path + '/', {
-            ignored: ignore,
+        this.#watcher = chokidar.watch(path, {
+            ignored: (path, stats) => this._ignore_path(path, stats),
             awaitWriteFinish: {
                 pollInterval: 100,
                 stabilityThreshold: 500,

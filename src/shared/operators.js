@@ -40,6 +40,7 @@ function forward_slashes(path) {
 function wrap_object(original, target) {
     Object.keys(target).forEach((key) => {
         if (typeof target[key] == 'object') {
+            if (Array.isArray(target[key])) return (original[key] = target[key]);
             if (original[key] === null || typeof original[key] !== 'object') original[key] = {};
             wrap_object(original[key], target[key]);
         } else {
