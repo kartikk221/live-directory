@@ -116,13 +116,15 @@ Below is a breakdown of the `LiveDirectory` class generated when creating a new 
   * **Object Schema**:
     * `names` [`Array`]: List of file names to keep.
     * `extensions` [`Array`]: List of file extensions to keep.
-  * **Function Schema**: `(String: path) => { /* Return true to keep */}`
+  * **Function Schema**: `(String: path, FS.stats: stats) => { /* Return true to keep */}`
+  * **Note!** If you provide your own function, the first execution will be without the `stats` parameter and the second will be with the `stats` parameter.
   * **Note!** the `keep` filter is like a whitelist and is applied **before** the `ignore` filter.
 * `ignore` [`Object`|`Function`]: Blacklist filter that can either be an object or a function.
   * **Object Schema**:
     * `names` [`Array`]: List of file/directory names to ignore.
     * `extensions` [`Array`]: List of file extensions to ignore.
-  * **Function Schema**: `(String: path) => { /* Return true to ignore */}`
+  * **Function Schema**: `(String: path, FS.stats: stats) => { /* Return true to ignore */}`
+  * **Note!** If you provide your own function, the first execution will be without the `stats` parameter and the second will be with the `stats` parameter.
   * **Note!** the `ignore` filter is like a global blacklist and thus is applied after the `keep` filter.
 * `retry` [`Object`]: File content reading retry policy.
   * `every` [`Number`]: Delay between retries in **milliseconds**.
