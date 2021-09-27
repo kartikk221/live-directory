@@ -34,7 +34,7 @@ class LiveDirectory extends EventEmitter {
      * @param {Array} options.ignore.names List of files/directories to ignore/blacklist.
      * @param {Array} options.ignore.extensions List of file extensions to ignore/blacklist.
      */
-    constructor(options = this.#options) {
+    constructor(options) {
         super();
 
         // Enforce object only options type
@@ -194,7 +194,7 @@ class LiveDirectory extends EventEmitter {
      * Initiates chokidar watcher instance for root library.
      */
     async _initiate_watcher() {
-        const { path, ignore } = this.#options;
+        const { path } = this.#options;
 
         // Ensure provided root path by user is accessible
         if (!(await is_accessible_path(path)))
