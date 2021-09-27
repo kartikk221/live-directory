@@ -3,6 +3,7 @@ const FileSystem = require('fs');
 const { async_wait, wrap_object } = require('../shared/operators');
 
 class LiveFile {
+    #name;
     #etag;
     #extension;
     #buffer;
@@ -19,6 +20,10 @@ class LiveFile {
     constructor(options = this.#options) {
         // Wrap options object with provided object
         wrap_object(this.#options, options);
+
+        // Determine the name of the file
+        const chunks = options.path.split('/');
+        this.#name = chunks[chunks.length - 1];
 
         // Determine the extension of the file
         this.#extension = this.#options.path.split('.');
@@ -94,6 +99,7 @@ class LiveFile {
             this.#ready_resolve();
             this.#ready_resolve = null;
         }
+        this.#ready_promise = true;
     }
 
     /**
@@ -113,6 +119,10 @@ class LiveFile {
     }
 
     /* LiveFile Getters */
+    get name() {
+        return this.#name;
+    }
+
     get path() {
         return this.#options.path;
     }

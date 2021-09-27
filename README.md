@@ -170,6 +170,7 @@ Below is a breakdown of the `LiveFile` instance class that represents all files.
 | Property  | Type     | Description                |
 | :-------- | :------- | :------------------------- |
 | `path` | `String` | System file path. |
+| `name` | `String` | File name. |
 | `extension` | `String` | File extension. |
 | `etag` | `String` | Unique etag compatible file hash. |
 | `content` | `String` | File text content. |
