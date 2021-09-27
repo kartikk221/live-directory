@@ -320,6 +320,7 @@ class LiveDirectory extends EventEmitter {
             // Resolve pending promise if one exists
             if (typeof reference.#ready_resolve == 'function') {
                 reference.#ready_resolve();
+                reference.#ready_promise = true;
                 reference.#ready_resolve = null;
             }
         });

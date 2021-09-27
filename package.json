@@ -1,6 +1,6 @@
 {
     "name": "live-directory",
-    "version": "2.1.1",
+    "version": "2.2.0",
     "description": "A Simple-To-Use Dynamic File Content Manager For Webservers",
     "main": "index.js",
     "scripts": {
