@@ -55,7 +55,7 @@ const LiveDirectory = require('live-directory');
 
 // Create LiveDirectory instance
 const live_templates = new LiveDirectory({
-    root_path: './templates/html'
+    path: './templates/html'
 });
 
 // Create server route for dashboard user page
@@ -66,8 +66,8 @@ some_server.get('/dashboard/user', (request, response) => {
     // Below relative path is translated under the hood to './templates/html/dashboard/user.html'
     let template = live_templates.get('/dashboard/user.html');
 
-    // Send rendered html code in response
-    return response.send(template.content);
+    // Send html string as response body
+    return response.type('html').send(template.content);
 });
 ```
 
@@ -78,7 +78,7 @@ const LiveDirectory = require('live-directory');
 
 // Create LiveDirectory instance
 const live_templates = new LiveDirectory({
-    root_path: './templates/html'
+    path: './templates/html'
 });
 
 // Handle 'reload' event from LiveDirectory so we can re-generate a new compiled micromustache instance on each file content update
@@ -101,7 +101,7 @@ some_server.get('/dashboard/user', (request, response) => {
     let html = template.render(user_options);
 
     // Send rendered html code in response
-    return response.send(html);
+    return response.type('html').send(html);
 });
 ```
 
