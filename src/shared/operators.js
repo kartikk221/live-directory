@@ -60,7 +60,7 @@ function is_accessible_path(path) {
         // Destructure constants for determine read & write codes
         const CONSTANTS = FileSystem.constants;
         const IS_VALID = CONSTANTS.F_OK;
-        const HAS_PERMISSION = CONSTANTS.W_OK;
+        const HAS_PERMISSION = CONSTANTS.R_OK;
         FileSystem.access(path, IS_VALID | HAS_PERMISSION, (error) => {
             if (error) return resolve(false);
             resolve(true);
