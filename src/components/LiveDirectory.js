@@ -20,6 +20,7 @@ class LiveDirectory extends EventEmitter {
             every: 250,
             max: 2,
         },
+        hot_reload: true,
     };
 
     /**
@@ -305,6 +306,13 @@ class LiveDirectory extends EventEmitter {
             try {
                 const files = reference.#tree.files;
                 const promises = [];
+
+                // If we don't want to watch the files, let's stop the watcher as soon as the initial list of files
+                // is fetched.
+                if (this.#options.hot_reload === false) {
+                    promises.push(this.#watcher.close());
+                }
+
                 Object.keys(files).forEach((path) => {
                     // If no buffer exists for file then it is still being read
                     const current = files[path];
