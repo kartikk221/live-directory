@@ -3,6 +3,7 @@
     "version": "2.3.2",
     "description": "A Simple-To-Use Dynamic File Content Manager For Webservers",
     "main": "index.js",
+    "types": "/types/index.d.ts",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1"
     },
@@ -23,7 +24,6 @@
     "author": "kartikk221",
     "license": "MIT",
     "dependencies": {
-        "chokidar": "^3.5.2",
-        "etag": "^1.8.1"
+        "chokidar": "^3.5.2"
     }
 }

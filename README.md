@@ -129,7 +129,8 @@ Below is a breakdown of the `LiveDirectory` class generated when creating a new 
 * `retry` [`Object`]: File content reading retry policy.
   * `every` [`Number`]: Delay between retries in **milliseconds**.
   * `max` [`Number`]: Maximum number of retries.
-* `hot_reload` [`boolean`]: Whether to listen for files changes or not. Defaults to `true`.
+* `live_reload` [`Boolean`]: Whether to watch for changes and automatically reload files upon changes.
+  * **Default**: `true`
 
 #### LiveDirectory Properties
 | Property  | Type     | Description                |
