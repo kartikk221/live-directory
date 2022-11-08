@@ -1,6 +1,6 @@
 {
     "name": "live-directory",
-    "version": "2.3.2",
+    "version": "3.0.0",
     "description": "A Simple-To-Use Dynamic File Content Manager For Webservers",
     "main": "index.js",
     "types": "/types/index.d.ts",
@@ -19,7 +19,14 @@
         "html-manager",
         "template-manager",
         "hot-reloading",
-        "webserver"
+        "reloading",
+        "webserver",
+        "template",
+        "manager",
+        "frontend",
+        "assets",
+        "watch",
+        "auto"
     ],
     "author": "kartikk221",
     "license": "MIT",
