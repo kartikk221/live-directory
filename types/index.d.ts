@@ -3,13 +3,23 @@ import { Readable } from 'stream';
 import { EventEmitter } from 'events';
 import { FSWatcher, WatchOptions } from 'chokidar';
 
+type FilterFunction = (path: string, stats: Stats) => boolean;
+interface FilterProperties {
+    names?: string[];
+    extensions?: string[];
+}
+
 interface LiveDirectoryOptions {
     static?: boolean;
+    watcher?: WatchOptions;
     cache?: {
         max_file_count?: number;
         max_file_size?: number;
     };
-    watcher?: WatchOptions;
+    filter?: {
+        keep?: FilterFunction | FilterProperties;
+        ignore?: FilterFunction | FilterProperties;
+    };
 }
 
 interface FileStats {
@@ -24,10 +34,10 @@ export default class LiveDirectory extends EventEmitter {
     constructor(path: string, options?: LiveDirectoryOptions): LiveDirectory;
 
     /**
-     * Returns the file stats for the provided relative path.
+     * Returns the file information for the provided relative path if it exists.
      * @param path
      */
-    file(path: string): FileStats | undefined;
+    info(path: string): FileStats | undefined;
 
     /**
      * Returns the file content for the provided relative path.
@@ -38,7 +48,7 @@ export default class LiveDirectory extends EventEmitter {
     /**
      * Destroys this instance.
      */
-    destory() {}
+    destory(): void;
 
     /**
      * Returns the root path.
@@ -51,17 +61,17 @@ export default class LiveDirectory extends EventEmitter {
     get static(): boolean;
 
     /**
+     * Returns the chokidar watcher.
+     */
+    get watcher(): FSWatcher;
+
+    /**
      * Returns a map of all files identified by their relative path to the root path.
      */
     get files(): Map<string, FileStats>;
 
     /**
-     * Returns a map of all cached files identified by their absolute path.
+     * Returns a map of all cached files identified by their relative path to the last update timestamp.
      */
-    get cached(): Map<string, boolean>;
-
-    /**
-     * Returns the chokidar watcher.
-     */
-    get watcher(): FSWatcher;
+    get cached(): Map<string, number>;
 }
