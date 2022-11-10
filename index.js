@@ -133,7 +133,7 @@ class LiveDirectory extends EventEmitter {
     }
 
     /**
-     * Asserts filters against the provided path and stats.
+     * Asserts instance filters against the provided path and stats.
      * @private
      * @param {string} path
      * @param {import('fs').Stats} stats
@@ -172,7 +172,7 @@ class LiveDirectory extends EventEmitter {
     /**
      * Initializes the directory map contents for the provided path.
      * @private
-     * @param {string} root The path to the directory to be mapped.
+     * @param {string} root
      */
     async _initialize(root) {
         const promises = [];
@@ -257,18 +257,19 @@ class LiveDirectory extends EventEmitter {
     }
 
     /**
-     *
+     * Modifies the directory map contents for the provided path.
+     * @private
      * @param {('add'|'update'|'delete')} action
      * @param {string} path
-     * @param {import('fs').Stats} stats
+     * @param {import('fs').Stats} [stats]
      */
     async _modify(action, path, stats) {
         // Generate a relative path for the content
         const relative_uri = this._to_relative_path(path);
         if (action === 'delete') {
             // Delete file stats and cache records
-            this.#cached.delete(path);
-            this.#files.delete(this._to_relative_path(path));
+            this.#files.delete(relative_uri);
+            this.#cached.delete(relative_uri);
         } else {
             // Override the raw stats with a file stats object
             stats = await this._create_stats(path, stats);
