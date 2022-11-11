@@ -1,6 +1,6 @@
 const Chokidar = require('chokidar');
 const LiveDirectory = require('../index.js');
-const { resolve_path, forward_slashes } = require('../operators.js');
+const { resolve_path, forward_slashes } = require('../src/shared/operators.js');
 
 function log(logger = 'SYSTEM', message) {
     let dt = new Date();
@@ -137,7 +137,7 @@ async function test_instance(options) {
 
         // Assert all expected files are in the files map
         for (const [path] of expected) {
-            if (!instance.info(path) && !ignored.has(path) && (!only || only.has(path))) return false;
+            if (!instance.get(path) && !ignored.has(path) && (!only || only.has(path))) return false;
         }
 
         return true;
@@ -146,7 +146,7 @@ async function test_instance(options) {
     // Assert that all cached files are also in the cached map
     await assert_log(group, '.cached property', () => {
         for (const [relative_path, file] of instance.files) {
-            if (file.cached && !instance.cached.has(relative_path)) return false;
+            if (file.cached && (!file.cached || !instance.cached.has(relative_path))) return false;
         }
         return true;
     });
