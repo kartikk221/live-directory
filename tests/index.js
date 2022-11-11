@@ -1,4 +1,5 @@
 const Chokidar = require('chokidar');
+const FileSystem = require('fs/promises');
 const LiveDirectory = require('../index.js');
 const { resolve_path, forward_slashes } = require('../src/shared/operators.js');
 
@@ -33,8 +34,15 @@ async function test_instance(options) {
     // Create a new instance of the LiveDirectory class
     const group = 'LiveDirectory';
     const instance = new LiveDirectory(RootPath, options);
-    log(group, 'Testing LiveDirectory with options:');
-    console.log(options);
+    log(
+        group,
+        'Testing LiveDirectory with options: ' +
+            JSON.stringify(options, (_, value) => (typeof value === 'function' ? value.toString() : value), 2)
+    );
+
+    // Track the add event files
+    const added = new Map();
+    instance.on('add', (path, stats) => added.set(path, stats));
 
     // Wait for the instance to be ready
     await new Promise((resolve) => instance.once('ready', resolve));
@@ -144,9 +152,17 @@ async function test_instance(options) {
     });
 
     // Assert that all cached files are also in the cached map
-    await assert_log(group, '.cached property', () => {
+    await assert_log(group, '.cached property', async () => {
         for (const [relative_path, file] of instance.files) {
-            if (file.cached && (!file.cached || !instance.cached.has(relative_path))) return false;
+            // Only check cached files
+            if (file.cached) {
+                // Assert the file is in the cached map
+                if (!instance.cached.has(relative_path)) return false;
+
+                // Ensure the in-memory content matches the file content
+                const raw = await FileSystem.readFile(file.path);
+                if (!file?.content?.equals?.(raw)) return false;
+            }
         }
         return true;
     });
