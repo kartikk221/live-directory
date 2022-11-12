@@ -1,3 +1,4 @@
+const Crypto = require('crypto');
 const Chokidar = require('chokidar');
 const FileSystem = require('fs/promises');
 const LiveDirectory = require('../index.js');
@@ -166,6 +167,65 @@ async function test_instance(options) {
         }
         return true;
     });
+
+    // Test emitted events if instance is not static
+    if (!instance.static) {
+        // Create a random file in the root directory
+        const random_path = instance.files.values().next().value.path;
+        const random_content = Crypto.randomBytes(10).toString('hex');
+        log(group, `Testing Events With File @ ${random_path}`);
+
+        // Test the 'add' event listener
+        await assert_log(group, 'properly emit "add" events', async () => {
+            // Create the random file and wait for the 'update' event
+            const file = instance.get(random_path);
+            await Promise.all([
+                new Promise((resolve) => file.once('update', resolve)),
+                FileSystem.writeFile(random_path, random_content),
+            ]);
+
+            // Assert all added files are in the live directory
+            for (const [path] of instance.files) {
+                if (!added.has(path)) return false;
+            }
+
+            // Assert that the content of the random file matches the content of the file in the live directory
+            const random_file = instance.get(random_path);
+            if (random_file.content === random_content) return false;
+
+            return true;
+        });
+
+        // Test the 'update' event listener
+        const random_content_2 = Crypto.randomBytes(10).toString('hex');
+        await assert_log(group, 'properly emit "update" events', async () => {
+            // Update the random file and wait for the 'update' event
+            const file = instance.get(random_path);
+            await Promise.all([
+                new Promise((resolve) => file.once('update', resolve)),
+                FileSystem.writeFile(random_path, random_content_2),
+            ]);
+
+            // Assert that the content of the random file matches the content of the file in the live directory
+            const random_file = instance.get(random_path);
+            if (random_file.content === random_content_2) return false;
+
+            return true;
+        });
+
+        // Test the 'delete' event listener
+        await assert_log(group, 'properly emit "delete" events', async () => {
+            // Delete the random file and wait for the 'delete' event
+            const [deleted] = await Promise.all([
+                new Promise((resolve) => instance.once('delete', (path) => resolve(random_path.endsWith(path)))),
+                FileSystem.unlink(random_path),
+            ]);
+            return deleted;
+        });
+
+        // Create the random file again for future tests
+        await FileSystem.writeFile(random_path, random_content);
+    }
 
     // Print new lines
     log(group, 'Successfully finished tested LiveDirectory instance.\n');

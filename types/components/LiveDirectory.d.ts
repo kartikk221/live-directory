@@ -1,5 +1,5 @@
-import { Stats } from 'fs';
 import LiveFile from './LiveFile';
+import { Stats } from 'fs';
 import { EventEmitter } from 'events';
 import { FSWatcher, WatchOptions } from 'chokidar';
 
@@ -49,7 +49,7 @@ export default class LiveDirectory extends EventEmitter {
     /**
      * Returns the chokidar watcher.
      */
-    get watcher(): FSWatcher;
+    get watcher(): FSWatcher | undefined;
 
     /**
      * Returns a map of all files identified by their relative path to the root path.

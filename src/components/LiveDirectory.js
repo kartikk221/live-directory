@@ -37,8 +37,8 @@ class LiveDirectory extends EventEmitter {
         static: false,
         watcher: {
             awaitWriteFinish: {
+                stabilityThreshold: 100,
                 pollInterval: 100,
-                stabilityThreshold: 500,
             },
         },
         cache: {
@@ -131,7 +131,13 @@ class LiveDirectory extends EventEmitter {
      * @returns {boolean}
      */
     _should_ignore(path, stats) {
-        return this.#filter ? this.#filter(path, stats) : false;
+        // Do not ignore if no there is no filter
+        // Do not ignore the root path
+        // Do not ignore if no stats are provided
+        if (path === this.#path || !this.#filter || !stats || stats.isDirectory()) return false;
+
+        // Assert filter against the provided path and stats
+        return this.#filter(path, stats);
     }
 
     /**
@@ -188,6 +194,9 @@ class LiveDirectory extends EventEmitter {
      * @param {string} root
      */
     _watch(root) {
+        // Initialize watcher if not already initialized
+        this.#options.watcher = this.#options.watcher || {};
+
         // Inject forced properties for live directory specific behavior
         this.#options.watcher.alwaysStat = true;
         this.#options.watcher.ignoreInitial = true;
@@ -219,8 +228,15 @@ class LiveDirectory extends EventEmitter {
             this.#files.delete(relative_path);
             this.#cached.delete(relative_path);
         } else {
-            // Retrieve existing live file instance if it exists
-            live_file = this.#files.get(relative_path) || new LiveFile(path);
+            live_file = this.#files.get(relative_path);
+            if (!live_file) {
+                // Create a new live file instance if it does not exist
+                live_file = new LiveFile(path);
+                action = 'add';
+            } else {
+                // Mark this action as an update to the existing live file
+                action = 'update';
+            }
 
             // Determine if the file should be cached
             const { size } = stats;
@@ -283,7 +299,7 @@ class LiveDirectory extends EventEmitter {
 
     /**
      * Returns the chokidar watcher.
-     * @returns {import('chokidar').FSWatcher}
+     * @returns {import('chokidar').FSWatcher=}
      */
     get watcher() {
         return this.#watcher;

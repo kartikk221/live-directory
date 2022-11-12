@@ -43,8 +43,8 @@ class LiveFile extends EventEmitter {
             this.#etag = `W/"${md5_hash([size, ctimeMs, mtimeMs].join(','))}"`;
         }
 
-        // Emit the reload event
-        this.emit('reload', this);
+        // Emit the 'update' event to notify listeners of the change
+        this.emit('update', this);
     }
 
     /**
