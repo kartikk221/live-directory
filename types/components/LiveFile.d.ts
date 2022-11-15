@@ -1,5 +1,5 @@
-import { Stats } from 'fs';
-import { Readable } from 'stream';
+import { Stats, BufferEncodingOption } from 'fs';
+import { Readable, ReadableOptions } from 'stream';
 import EventEmitter from 'events';
 
 export default class LiveFile extends EventEmitter {
@@ -7,12 +7,17 @@ export default class LiveFile extends EventEmitter {
 
     /**
      * Reloads the file stats and content from the file system.
-     * @param stats 
-     * @param cache 
+     * @param stats
+     * @param cache
      */
-    async reload(stats?: Stats, cache = false): Promise<LiveFile>;
+    reload(stats?: Stats, cache?: boolean): Promise<LiveFile>;
 
-    
+    /**
+     * Returns a Readable stream of the file's content.
+     * @param options
+     */
+    stream(options?: BufferEncodingOption | ReadableOptions): Readable;
+
     /**
      * Returns the file system path.
      */
@@ -31,7 +36,7 @@ export default class LiveFile extends EventEmitter {
     /**
      * Returns the file's content as a cached Buffer or ReadableStream.
      */
-    get content(): Buffer | Readable;
+    get content(): Buffer;
 
     /**
      * Whether this file is cached in memory or not.

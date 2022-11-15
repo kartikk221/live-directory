@@ -44,7 +44,16 @@ class LiveFile extends EventEmitter {
         }
 
         // Emit the 'update' event to notify listeners of the change
-        this.emit('update', this);
+        this.emit('update');
+    }
+
+    /**
+     * Returns a Readable stream of the file's content.
+     * @param {import('fs').BufferEncodingOption|import('stream').ReadableOptions} [options]
+     * @returns {import('stream').Readable}
+     */
+    stream(options) {
+        return FileSystemSync.createReadStream(this.#path, options);
     }
 
     /**
@@ -56,14 +65,6 @@ class LiveFile extends EventEmitter {
     }
 
     /**
-     * Returns the file's system stats.
-     * @returns {import('fs').Stats}
-     */
-    get stats() {
-        return this.#stats;
-    }
-
-    /**
      * Returns a unique ETag for the file.
      * @returns {string}
      */
@@ -72,11 +73,19 @@ class LiveFile extends EventEmitter {
     }
 
     /**
+     * Returns the file's system stats.
+     * @returns {import('fs').Stats}
+     */
+    get stats() {
+        return this.#stats;
+    }
+
+    /**
      * Returns the file's content as a cached Buffer or ReadableStream.
-     * @returns {Buffer|import('stream').Readable}
+     * @returns {Buffer=}
      */
     get content() {
-        return this.#content || FileSystemSync.createReadStream(this.#path);
+        return this.#content;
     }
 
     /**

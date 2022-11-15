@@ -23,7 +23,7 @@ interface LiveDirectoryOptions {
 }
 
 export default class LiveDirectory extends EventEmitter {
-    constructor(path: string, options?: LiveDirectoryOptions): LiveDirectory;
+    constructor(path: string, options?: LiveDirectoryOptions);
 
     /**
      * Returns the live file at the provided path if it exists.

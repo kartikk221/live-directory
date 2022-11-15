@@ -25,7 +25,7 @@ async function assert_log(group, target, assertion) {
     }
 }
 
-const RootPath = forward_slashes(resolve_path('./root'));
+const RootPath = forward_slashes(resolve_path(`${__dirname}/root`));
 
 /**
  * Tests the instance of the LiveDirectory class
