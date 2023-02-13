@@ -28,6 +28,7 @@ const { forward_slashes, resolve_path, is_accessible_path } = require('../shared
  */
 
 class LiveDirectory extends EventEmitter {
+    static LiveFile = LiveFile;
     #path;
     #filter;
     #watcher;
