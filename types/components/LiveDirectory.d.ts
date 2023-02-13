@@ -22,8 +22,10 @@ interface LiveDirectoryOptions {
     };
 }
 
-export default class LiveDirectory extends EventEmitter {
+declare class LiveDirectory extends EventEmitter {
     constructor(path: string, options?: LiveDirectoryOptions);
+    
+    static LiveFile : typeof LiveFile;
 
     /**
      * Returns the live file at the provided path if it exists.
@@ -61,3 +63,5 @@ export default class LiveDirectory extends EventEmitter {
      */
     get cached(): Map<string, number>;
 }
+
+export = LiveDirectory;

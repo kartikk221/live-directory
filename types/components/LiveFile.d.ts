@@ -2,7 +2,7 @@ import { Stats, BufferEncodingOption } from 'fs';
 import { Readable, ReadableOptions } from 'stream';
 import EventEmitter from 'events';
 
-export default class LiveFile extends EventEmitter {
+declare class LiveFile extends EventEmitter {
     constructor(path: string);
 
     /**
@@ -43,3 +43,5 @@ export default class LiveFile extends EventEmitter {
      */
     get cached(): boolean;
 }
+
+export = LiveFile;
