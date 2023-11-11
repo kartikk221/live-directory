@@ -9,7 +9,7 @@ Below is a breakdown of the `LiveFile` component which is an extended `EventEmit
 | `etag` | `String` | The unique E-Tag of this file. |
 | `stats` | `fs.Stats` | The filesystem stats of this file. |
 | `cached` | `Boolean` | Whether this file is cached in memory or not. |
-| `content` | `Buffer` | The file content as `Buffer` if cached or `stream.Readable` otherwise. |
+| `content` | `Buffer OR stream.Readable` | The file content as `Buffer` if cached or `stream.Readable` otherwise. |
 
 ### Live Directory Instance Methods
 * `reload(fs.Stats?: stats, Boolean?: cache)`: Manually reload and cache new stats/content for this file.
