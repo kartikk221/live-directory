@@ -32,7 +32,7 @@ Below is a breakdown of the `LiveDirectory` component which is an extended `Even
 
 ### Live Directory Instance Methods
 * `get(String: path)`: Returns the live file at the provided path if it exists.
-    * **Returns** a `LiveFile` instance of `undefined`.
+    * **Returns** a `LiveFile` instance or `undefined`.
     * **See** [`> [LiveFile]`](../docs/LiveFile.md) for more information on the returned component.
     * **Note** The path can be a relative or absolute.
         * **Examples:** `assets/test.js`, `/assets/test.js`, `C:/projects/something/assets/test.js`, etc etc.
