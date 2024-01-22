@@ -36,7 +36,7 @@ declare class LiveDirectory extends EventEmitter {
     /**
      * Destroys this instance.
      */
-    destory(): void;
+    destroy(): void;
 
     /**
      * Returns the root directory system path.
