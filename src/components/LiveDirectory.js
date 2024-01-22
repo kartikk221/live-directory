@@ -270,7 +270,7 @@ class LiveDirectory extends EventEmitter {
     /**
      * Destroys this instance.
      */
-    destory() {
+    destroy() {
         // Close the chokidar watcher if it exists
         if (this.#watcher) this.#watcher.close();
 
@@ -278,8 +278,8 @@ class LiveDirectory extends EventEmitter {
         this.#files.clear();
         this.#cached.clear();
 
-        // Emit the destory event
-        this.emit('destory');
+        // Emit the destroy event
+        this.emit('destroy');
     }
 
     /**
