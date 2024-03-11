@@ -250,6 +250,25 @@ async function test_instance(options) {
         },
     });
 
+    // Test the instance with symbolic links
+    await test_instance({
+        static: true,
+        follow_symbolic_link: true,
+        cache: {
+            max_file_count: 5,
+            max_file_size: 100,
+        },
+        filter: {
+            ignore: {
+                names: ['file3.js'],
+                extensions: ['html'],
+            },
+            keep: {
+                extensions: ['js'],
+            },
+        },
+    });
+
     // Test the instance with static mode disabled
     await test_instance({
         static: false,
