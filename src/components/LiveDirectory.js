@@ -36,6 +36,7 @@ class LiveDirectory extends EventEmitter {
     #cached = new Map();
     #options = {
         static: false,
+        follow_symbolic_link: false,
         watcher: {
             awaitWriteFinish: {
                 stabilityThreshold: 100,
@@ -173,6 +174,21 @@ class LiveDirectory extends EventEmitter {
             if (content.isDirectory()) {
                 // Recursively initialize the sub directory
                 promises.push(this._initialize(path));
+            } else if (content.isSymbolicLink()) {
+                if (this.#options.follow_symbolic_link) {
+                    promises.push(
+                        new Promise((resolve) =>
+                            FileSystem.stat(path).then((stats) => {
+                                if(stats.isDirectory())
+                                    this._initialize(path).then(resolve)
+                                else
+                                    this._should_ignore(path, stats)
+                                        ? resolve()
+                                        : this._modify('add', path, stats).then(resolve)
+                            })
+                        )
+                    )
+                }
             } else {
                 // Assert the filter after stats are retrieved
                 promises.push(
